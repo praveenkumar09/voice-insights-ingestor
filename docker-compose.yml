@@ -1,0 +1,28 @@
+# Reuses the Postgres/pgvector server that cobol-ingestor-api owns on the
+# `cobalt-shared` network (bring that stack up first: `cd
+# ../cobol-ingestor-api && docker compose up -d postgres`) — this project
+# does NOT run its own Postgres container. It only writes to a separate
+# schema/table (voice_insights.product_chunks) in the same shared database,
+# self-provisioned on first run (see ProductVectorStore).
+#
+# One-shot batch job, not a long-running service — run it with:
+#   docker compose run --rm ingestor
+networks:
+  cobalt-shared:
+    external: true
+
+services:
+  ingestor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: voice_insights_ingestor
+    networks:
+      - cobalt-shared
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DB: ingestor
+      PG_USER: admin
+      PG_PASS: admin
